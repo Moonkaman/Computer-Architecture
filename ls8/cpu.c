@@ -9,7 +9,7 @@
  */
 void cpu_load(struct cpu *cpu, char *fileName)
 {
-  // char data[DATA_LEN] = {
+  // char data1[DATA_LEN] = {
   //     // From print8.ls8
   //     0b10000010, // LDI R0,8
   //     0b00000000,
@@ -18,6 +18,12 @@ void cpu_load(struct cpu *cpu, char *fileName)
   //     0b00000000,
   //     0b00000001 // HLT
   // };
+
+  // for(int i = 0; i < DATA_LEN; i++){
+  //   printf("%d\n", data1[i]);
+  // }
+
+  // exit(0);
 
   FILE *fp;
   char data[DATA_LEN];
@@ -34,13 +40,13 @@ void cpu_load(struct cpu *cpu, char *fileName)
   while (fgets(data, DATA_LEN, fp) != NULL)
   {
     char *endptr;
-    unsigned char v = strtoul(data, &endptr, 10);
+    unsigned char v = strtoul(data, &endptr, 2);
 
     if (endptr == data)
     {
       continue;
     }
-    printf("%d\n", v);
+    // printf("%d\n", v);
     cpu->ram[address] = v;
     address++;
   }
@@ -63,7 +69,7 @@ void alu(struct cpu *cpu, enum alu_op op, unsigned char regA, unsigned char regB
   switch (op)
   {
   case ALU_MUL:
-    // TODO
+    printf("%d\n", cpu->registers[regA] * cpu->registers[regB]);
     break;
 
     // TODO: implement more ALU ops
@@ -113,6 +119,10 @@ void cpu_run(struct cpu *cpu)
 
     case HLT:
       running = 0;
+      break;
+
+    case MUL:
+      alu(cpu, ALU_MUL, operandA, operandB);
       break;
 
     default:
