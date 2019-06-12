@@ -125,6 +125,16 @@ void cpu_run(struct cpu *cpu)
       alu(cpu, ALU_MUL, operandA, operandB);
       break;
 
+    case PUSH:
+      cpu->registers[SP]--;
+      cpu->ram[cpu->registers[SP]] = cpu->registers[operandA];
+      break;
+
+    case POP:
+      cpu->registers[operandA] = cpu->ram[cpu->registers[SP]];
+      cpu->registers[SP]++;
+      break;
+
     default:
       printf("Error on instruction %d\n", cpu->PC);
       exit(0);
@@ -145,4 +155,5 @@ void cpu_init(struct cpu *cpu)
   cpu->PC = 0;
   memset(cpu->ram, 0, 256);
   memset(cpu->registers, 0, 8);
+  cpu->registers[SP] = 0xf4;
 }
