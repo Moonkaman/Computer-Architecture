@@ -72,7 +72,8 @@ void alu(struct cpu *cpu, enum alu_op op, unsigned char regA, unsigned char regB
     printf("%d\n", cpu->registers[regA] * cpu->registers[regB]);
     break;
 
-    // TODO: implement more ALU ops
+  case ALU_ADD:
+    cpu->registers[regA] = cpu->registers[regA] + cpu->registers[regB];
   }
 }
 
@@ -95,6 +96,7 @@ void cpu_run(struct cpu *cpu)
   int IR;
   int operandA;
   int operandB;
+  int inc;
 
   while (running)
   {
@@ -106,7 +108,9 @@ void cpu_run(struct cpu *cpu)
     operandA = cpu_ram_read(cpu, cpu->PC + 1);
     operandB = cpu_ram_read(cpu, cpu->PC + 2);
     int numOperands = (IR >> 6) + 1;
+    inc = 1;
     // 4. switch() over it to decide on a course of action.
+    // printf("IR: %x\n", IR);
     switch (IR)
     {
     case LDI:
@@ -114,7 +118,7 @@ void cpu_run(struct cpu *cpu)
       break;
 
     case PRN:
-      printf("%x\n", cpu->registers[operandA]);
+      printf("%d\n", cpu->registers[operandA]);
       break;
 
     case HLT:
@@ -135,6 +139,24 @@ void cpu_run(struct cpu *cpu)
       cpu->registers[SP]++;
       break;
 
+    case CALL:
+      inc = 0;
+      cpu->registers[SP]--;
+      cpu->ram[cpu->registers[SP]] = cpu->PC + numOperands;
+      cpu->PC = cpu->registers[operandA];
+      // printf("cpu->PC = %d\n", cpu->PC);
+      break;
+
+    case RET:
+      cpu->PC = cpu->ram[cpu->registers[SP]];
+      cpu->registers[SP]++;
+      inc = 0;
+      break;
+
+    case ADD:
+      alu(cpu, ALU_ADD, operandA, operandB);
+      break;
+
     default:
       printf("Error on instruction %d\n", cpu->PC);
       exit(0);
@@ -142,7 +164,10 @@ void cpu_run(struct cpu *cpu)
     }
     // 5. Do whatever the instruction should do according to the spec.
     // 6. Move the PC to the next instruction.
-    cpu->PC += numOperands;
+    if (inc)
+    {
+      cpu->PC += numOperands;
+    }
   }
 }
 
