@@ -74,6 +74,21 @@ void alu(struct cpu *cpu, enum alu_op op, unsigned char regA, unsigned char regB
 
   case ALU_ADD:
     cpu->registers[regA] = cpu->registers[regA] + cpu->registers[regB];
+    break;
+
+  case ALU_CMP:
+    if (cpu->registers[regA] == cpu->registers[regB])
+    {
+      cpu->FL = 0b00000001;
+    }
+    else if (cpu->registers[regA] > cpu->registers[regB])
+    {
+      cpu->FL = 0b00000010;
+    }
+    else if (cpu->registers[regA] < cpu->registers[regB])
+    {
+      cpu->FL = 0b00000100;
+    }
   }
 }
 
@@ -109,8 +124,9 @@ void cpu_run(struct cpu *cpu)
     operandB = cpu_ram_read(cpu, cpu->PC + 2);
     int numOperands = (IR >> 6) + 1;
     inc = 1;
+    // cpu->FL = 0b00000000;
     // 4. switch() over it to decide on a course of action.
-    // printf("IR: %x\n", IR);
+    // printf("PC: %d IR: %d FL: %d CPU Registers: [%d, %d, %d, %d, %d, %d, %d, %d]\n", cpu->PC + 1, IR, cpu->FL, cpu->registers[0], cpu->registers[1], cpu->registers[2], cpu->registers[3], cpu->registers[4], cpu->registers[5], cpu->registers[6], cpu->registers[7]);
     switch (IR)
     {
     case LDI:
@@ -157,6 +173,39 @@ void cpu_run(struct cpu *cpu)
       alu(cpu, ALU_ADD, operandA, operandB);
       break;
 
+    case CMP:
+      alu(cpu, ALU_CMP, operandA, operandB);
+      break;
+
+    case JMP:
+      inc = 0;
+      cpu->PC = cpu->registers[operandA];
+      break;
+
+    case JEQ:
+      inc = 0;
+      if (cpu->FL & 0b00000001)
+      {
+        cpu->PC = cpu->registers[operandA];
+      }
+      else
+      {
+        inc = 1;
+      }
+      break;
+
+    case JNE:
+      inc = 0;
+      if (cpu->FL ^ 0b00000001)
+      {
+        cpu->PC = cpu->registers[operandA];
+      }
+      else
+      {
+        inc = 1;
+      }
+      break;
+
     default:
       printf("Error on instruction %d\n", cpu->PC);
       exit(0);
@@ -181,4 +230,5 @@ void cpu_init(struct cpu *cpu)
   memset(cpu->ram, 0, 256);
   memset(cpu->registers, 0, 8);
   cpu->registers[SP] = 0xf4;
+  cpu->FL = 0b00000000;
 }
